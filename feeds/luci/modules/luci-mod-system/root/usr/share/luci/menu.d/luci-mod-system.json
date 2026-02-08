@@ -157,5 +157,28 @@
 		"depends": {
 			"acl": [ "luci-mod-system-reboot" ]
 		}
+	},
+
+	"admin/system/myTest": {
+		"title": "test",
+		"order": 90,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-myTest" ]
+		}
+	},
+
+	"admin/system/myTest/page01": {
+		"title": "test_page01",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "system/test_page01"
+		},
+		"depends": {
+			"acl": [ "luci-app-myTest" ]
+		}
 	}
 }
