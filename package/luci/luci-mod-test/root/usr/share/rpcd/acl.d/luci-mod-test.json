@@ -1,0 +1,18 @@
+{
+	"luci-app-myTest": {
+        "description": "访问 MyTest 应用",
+        "read": {
+            "ubus": {
+                "file": ["read"],
+                "log": ["read"],
+                "network.interface.*": ["status", "dump"]
+            }
+        },
+        "write": {
+            "ubus": {
+                "file": ["write"],
+                "log": ["write"]
+            }
+        }
+    }
+}
