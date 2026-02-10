@@ -1,0 +1,14 @@
+config global 'settings'
+    option enable '1'
+    option mode 'advanced'
+
+config profile
+    option name 'profile1'
+    option ip '10.0.0.1'
+    list service 'http'
+    list service 'ssh'
+
+config profile
+    option name 'profile2'
+    option ip '10.0.0.2'
+    list service 'dns'

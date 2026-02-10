@@ -14,5 +14,15 @@
                 "log": ["write"]
             }
         }
+    },
+
+    "luci-mod-myapp-uci": {
+        "description": "uci_page_01页面1给uci的相关权限",
+        "read": {
+            "uci": [ "myapp" ]
+        },
+        "write": {
+            "uci": [ "myapp" ]
+        }
     }
 }

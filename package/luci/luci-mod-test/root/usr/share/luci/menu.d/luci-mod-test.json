@@ -37,9 +37,53 @@
 		}
 	},
 
+	"admin/Test/view/view_page_03": {
+		"title": "前端生命周期",
+		"order": 3,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_03"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/uci": {
+		"title": "uci",
+		"order": 2,
+		"action": {
+			"type": "alias",
+			"path": "admin/Test/uci/uci_page_01"
+		}
+	},
+
+	"admin/Test/uci/uci_page_01": {
+		"title": "uci的最基本的使用",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "test_view/uci_page_01"
+		},
+		"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/uci/uci_page_02": {
+		"title": "uci不同类型的配置属性和视图结合使用",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "test_view/uci_page_02"
+		},
+		"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
 	"admin/Test/ubs": {
 		"title": "ubs",
-		"order": 1,
+		"order": 3,
 		"action": {
 			"type": "alias",
 			"path": "admin/Test/ubs/ubs_page_01"
@@ -62,34 +106,6 @@
 			"type": "view",
 			"path": "test_view/ubs_page_02"
 		}
-	},
-
-	"admin/Test/uci": {
-		"title": "uci",
-		"order": 1,
-		"action": {
-			"type": "alias",
-			"path": "admin/Test/uci/uci_page_01"
-		}
-	},
-
-	"admin/Test/uci/uci_page_01": {
-		"title": "uci_01",
-		"order": 1,
-		"action": {
-			"type": "view",
-			"path": "test_view/uci_page_01"
-		}
-	},
-
-	"admin/Test/uci/uci_page_02": {
-		"title": "uci_02",
-		"order": 2,
-		"action": {
-			"type": "view",
-			"path": "test_view/uci_page_02"
-		}
 	}
-
 	
 }
