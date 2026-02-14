@@ -29,7 +29,7 @@
 	},
 
 	"admin/Test/view/view_page_02": {
-		"title": "view_02",
+		"title": "前端函数测试",
 		"order": 2,
 		"action": {
 			"type": "view",
