@@ -29,11 +29,11 @@
 	},
 
 	"admin/Test/view/view_page_02": {
-		"title": "前端函数测试",
+		"title": "原生和内嵌E",
 		"order": 2,
 		"action": {
 			"type": "view",
-			"path": "test_view/view_page_02"
+			"path": "test_view/view_page_02_html"
 		}
 	},
 
@@ -42,7 +42,40 @@
 		"order": 3,
 		"action": {
 			"type": "view",
-			"path": "test_view/view_page_03"
+			"path": "test_view/view_page_03_life"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/view/view_page_04": {
+		"title": "L模块",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_04_L"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/view/view_page_05": {
+		"title": "ui模块测试",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_05_ui"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/view/view_page_06": {
+		"title": "poll定时模块",
+		"order": 6,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_06_poll"
 		},"depends": {
 			"acl": [ "luci-mod-myapp-uci" ]
 		}
