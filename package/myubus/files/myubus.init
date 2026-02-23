@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1          # 使用 procd 管理进程
+START=50             # 启动顺序
+STOP=50              # 停止顺序
+
+start_service() {                               # 定义服务启动函数（执行 /etc/init.d/xxx start 时会调用）
+    procd_open_instance                         # 打开一个 procd 实例，开始配置要启动的进程
+    procd_set_param command /usr/sbin/myubus    # 指定要启动的程序及其路径（实际执行的命令）
+    procd_set_param respawn                     # 启用崩溃自动重启机制（进程异常退出会自动重新拉起）
+    procd_set_param stdout 1                    # 将程序的标准输出重定向到系统日志（可用 logread 查看）
+    procd_set_param stderr 1                    # 将程序的错误输出重定向到系统日志
+    procd_set_param file /etc/config/myubus     # 监听该配置文件变化（文件变动时会触发服务重载）
+    procd_close_instance                        # 结束实例配置并通知 procd 启动该进程
+} 
+
+reload_service() {   # 定义重载函数
+    procd_send_signal myubus
+}
+
+service_triggers() { # 定义触发器
+    procd_add_reload_trigger myubus
+}
