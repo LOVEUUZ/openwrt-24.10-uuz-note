@@ -108,7 +108,7 @@ static int my_info_par(struct ubus_context *ctx,
 
     blob_buf_init(&b, 0);
 
-    blobmsg_add_u32(&b, "code", 0);
+    blobmsg_add_u32(&b, "code", 0); //"code": 0,
 
     /* 打开嵌套 table
      * JSON 结构：
@@ -196,10 +196,10 @@ enum {
     __PAR2_MAX,
 };
 
-/* 定义 policy 规则 */
+/* 定义 policy 规则 只允许固定名称的属性接受固定类型的参数, 否则丢弃该属性 */
 static const struct blobmsg_policy par2_policy[__PAR2_MAX] = {
     [PAR2_NAME] = {.name = "name", .type = BLOBMSG_TYPE_STRING },
-    [PAR2_AGE] = {.name = "age",  .type = BLOBMSG_TYPE_INT32  },
+    [PAR2_AGE]  = {.name = "age",  .type = BLOBMSG_TYPE_INT32  },
 };
 
 static int my_info_par2(struct ubus_context *ctx,
@@ -211,7 +211,7 @@ static int my_info_par2(struct ubus_context *ctx,
     struct blob_attr *tb[__PAR2_MAX];
 
     blob_buf_init(&b, 0);
-    blobmsg_add_u32(&b, "code", 0);
+    blobmsg_add_u32(&b, "code", 0);  //"code": 0,
 
     if (!msg) {
         blobmsg_add_string(&b, "error", "no input");
@@ -232,21 +232,21 @@ static int my_info_par2(struct ubus_context *ctx,
         blob_data(msg),
         blob_len(msg));
 
-    void *tbl = blobmsg_open_table(&b, "data");
+    void *tbl = blobmsg_open_table(&b, "data"); // "data": { 
 
     if (tb[PAR2_NAME]) {
         const char *name = blobmsg_get_string(tb[PAR2_NAME]);
         printf("name = %s\n", name);
-        blobmsg_add_string(&b, "name", name);
+        blobmsg_add_string(&b, "name", name); //"name": "uuz",
     }
 
     if (tb[PAR2_AGE]) {
         int age = blobmsg_get_u32(tb[PAR2_AGE]);
         printf("age = %d\n", age);
-        blobmsg_add_u32(&b, "age", age);
+        blobmsg_add_u32(&b, "age", age); //"age": 18
     }
 
-    blobmsg_close_table(&b, tbl);
+    blobmsg_close_table(&b, tbl);   // }
 
     ubus_send_reply(ctx, req, b.head);
     return 0;

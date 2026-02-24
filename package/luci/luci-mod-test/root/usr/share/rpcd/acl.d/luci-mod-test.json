@@ -24,5 +24,19 @@
         "write": {
             "uci": [ "myapp" ]
         }
+    },
+
+    "myubus-test": {
+        "description": "访问myubus的权限",
+        "read": {
+            "ubus": {
+                "myubus": ["info", "par.test", "par2"]
+            }
+        },
+        "write": {
+            "ubus": {
+                "myubus": ["info", "par.test", "par2"]
+            }
+        }
     }
 }

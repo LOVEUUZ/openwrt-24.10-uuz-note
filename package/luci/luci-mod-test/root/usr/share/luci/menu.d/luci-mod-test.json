@@ -138,6 +138,9 @@
 		"action": {
 			"type": "view",
 			"path": "test_view/ubs_page_02"
+		},
+		"depends": {
+			"acl": [ "myubus-test" ]
 		}
 	}
 	
