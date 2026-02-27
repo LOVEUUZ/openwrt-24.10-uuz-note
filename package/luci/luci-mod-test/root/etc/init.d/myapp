@@ -1,0 +1,86 @@
+#!/bin/sh /etc/rc.common
+
+# 启动优先级（越小越早）
+START=99
+STOP=10
+
+# 使用 procd
+USE_PROCD=1
+
+# 服务名称
+PROG=/usr/sbin/myubus
+
+# =========================
+# 启动服务
+# =========================
+start_service() {
+    logger -t myapp "start_service() called"
+
+    # 打开一个 procd 实例
+    procd_open_instance
+
+    # 指定启动程序（这里用 logger 占位）
+    # 实际使用时改成：
+    # procd_set_param command "$PROG" --option xxx
+    procd_set_param command /bin/sh -c "logger -t myapp 'myapp running (placeholder loop)'; sleep 3600"
+
+    # 自动重启机制
+    procd_set_param respawn 3600 5 5
+    # 参数含义：
+    # respawn <threshold> <timeout> <retry>
+    # threshold: 多久内退出算异常
+    # timeout: 重启间隔
+    # retry: 最大重试次数
+
+    # 标准输出错误重定向
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+
+    # 如果依赖网络
+    procd_add_jail_mount /etc/config
+    procd_set_param file /etc/config/myapp
+
+    # 关闭实例
+    procd_close_instance
+}
+
+# =========================
+# 停止服务
+# =========================
+stop_service() {
+    logger -t myapp "stop_service() called"
+}
+
+# =========================
+# 重新加载配置 (看了一圈别人写的, 也基本都是重启操作或者ubus call, 也有一些看起来是内核相关或者驱动才比较多操作)
+# =========================
+reload_service() {
+    logger -t myapp "reload_service() called"
+    # 如果程序支持 reload 信号，可以：
+    # procd_send_signal myubus sighup
+
+    # 其实就是普通的函数注册
+    ubus call myubus reload    
+
+    # stop
+	# start  
+}
+
+# =========================
+# 重启（不要写这个, 默认就有 restart, 默认逻辑就是stop和start, 如果没有特殊操作, 就用系统默认的）
+# =========================
+# restart() {
+#     logger -t myapp "restart() called"
+#     stop
+#     start
+# }
+
+# =========================
+# UCI 触发器（关键）
+# 当执行 uci commit myapp 时自动触发 reload
+# =========================
+service_triggers() {
+    logger -t myapp "service_triggers() registered"
+
+    procd_add_reload_trigger "myubus"
+}

@@ -18,9 +18,12 @@
 #include <libubus.h>
 #include <libubox/blobmsg_json.h>
 #include <libubox/uloop.h>
+#include <syslog.h>
 
 /* ubus 上下文指针 */
 static struct ubus_context *ctx;
+
+static struct uloop_timeout reconnect_timer; // 重连定时器
 
 /* 全局 blob buffer
  * 所有 reply 都写入这里
@@ -130,32 +133,32 @@ static int my_info_par(struct ubus_context *ctx,
             const char *name = blobmsg_name(attr);
             int type = blobmsg_type(attr);
 
-            printf("Key: %s, Type: %d, Value: ", name, type);
+            syslog(LOG_DEBUG, "Key: %s, Type: %d, Value: ", name, type);
 
             switch (type) {
 
             case BLOBMSG_TYPE_STRING:
-                printf("%s\n", blobmsg_get_string(attr));
+                syslog(LOG_DEBUG, "%s\n", blobmsg_get_string(attr));
                 blobmsg_add_string(&b, name, blobmsg_get_string(attr));
                 break;
 
             case BLOBMSG_TYPE_INT32:
-                printf("%d\n", blobmsg_get_u32(attr));
+                syslog(LOG_DEBUG, "%d\n", blobmsg_get_u32(attr));
                 blobmsg_add_u32(&b, name, blobmsg_get_u32(attr));
                 break;
 
             case BLOBMSG_TYPE_INT64:
-                printf("%lld\n", (long long)blobmsg_get_u64(attr));
+                syslog(LOG_DEBUG, "%lld\n", (long long)blobmsg_get_u64(attr));
                 blobmsg_add_u64(&b, name,blobmsg_get_u64(attr));
                 break;
 
             case BLOBMSG_TYPE_BOOL:
-                printf("%s\n", blobmsg_get_bool(attr) ? "true" : "false");
+                syslog(LOG_DEBUG,  blobmsg_get_bool(attr) ? "true" : "false");
                 blobmsg_add_u8(&b, name, blobmsg_get_bool(attr));
                 break;
 
             default:
-                printf("Unsupported type\n");
+                syslog(LOG_DEBUG, "Unsupported type");
                 break;
             }
         }
@@ -236,13 +239,13 @@ static int my_info_par2(struct ubus_context *ctx,
 
     if (tb[PAR2_NAME]) {
         const char *name = blobmsg_get_string(tb[PAR2_NAME]);
-        printf("name = %s\n", name);
+        syslog(LOG_DEBUG, "name = %s\n", name);
         blobmsg_add_string(&b, "name", name); //"name": "uuz",
     }
 
     if (tb[PAR2_AGE]) {
         int age = blobmsg_get_u32(tb[PAR2_AGE]);
-        printf("age = %d\n", age);
+        syslog(LOG_DEBUG, "age = %d\n", age);
         blobmsg_add_u32(&b, "age", age); //"age": 18
     }
 
@@ -252,6 +255,31 @@ static int my_info_par2(struct ubus_context *ctx,
     return 0;
 }
 
+/* ==============================
+ * ubus reload 方法实现 (应用层该操作麻烦的话就算了,让重启的方式来完成重载)
+ * ============================== */
+static int my_reload(struct ubus_context *ctx,
+          struct ubus_object *obj,
+          struct ubus_request_data *req,
+          const char *method,
+          struct blob_attr *msg)
+{
+
+    syslog(LOG_DEBUG, "Received reload request via ubus start");
+
+    /* 执行真正的重载逻辑 */
+    // reload_config();
+
+    /* 向调用者返回成功 */
+    blob_buf_init(&b, 0);
+    blobmsg_add_string(&b, "msg", "reload success");
+
+    ubus_send_reply(ctx, req, b.head);
+
+    syslog(LOG_DEBUG, "Received reload request via ubus end");
+
+    return 0;
+}
 
 /* ============================================================
  *  注册方法
@@ -261,12 +289,13 @@ static const struct ubus_method my_methods[] = {
     UBUS_METHOD_NOARG("info", my_info),
     UBUS_METHOD("par.test", my_info_par, par_policy),
     UBUS_METHOD("par2", my_info_par2, par2_policy),
+    
+    UBUS_METHOD_NOARG("reload", my_reload)              //init脚本reload操作调用
 };
 
 
 /* 定义对象类型 */
-static struct ubus_object_type my_object_type =
-UBUS_OBJECT_TYPE("myubus", my_methods);
+static struct ubus_object_type my_object_type = UBUS_OBJECT_TYPE("myubus", my_methods);
 
 
 /* 定义对象 */
@@ -278,8 +307,41 @@ static struct ubus_object my_object = {
 };
 
 
+/* ==============================
+ * ubus 连接断开处理
+ * ============================== */
+
+static void reconnect_timer_cb(struct uloop_timeout *t)
+{
+    syslog(LOG_DEBUG, "Reconnecting to ubus...");
+
+    ctx = ubus_connect(NULL);
+    if (!ctx) {
+        uloop_timeout_set(&reconnect_timer, 2000);
+        return;
+    }
+
+    ubus_add_uloop(ctx);
+    ubus_add_object(ctx, &my_object);
+}
+
+/*
+ * ubus 断开时自动重连
+ */
+static void ubus_connection_lost(struct ubus_context *ctx)
+{
+    syslog(LOG_DEBUG, "ubus connection lost");
+    ubus_free(ctx);
+
+    reconnect_timer.cb = reconnect_timer_cb;
+    uloop_timeout_set(&reconnect_timer, 2000);
+}
+
 
 int main(int argc, char **argv) {
+     // 可选：设置日志的标识符和选项，如果不调用，syslog会使用默认值
+     openlog("myubus", LOG_CONS | LOG_PID, LOG_USER); 
+
     /* 1️⃣ 初始化事件循环
      * ubus 是基于事件驱动的，必须先初始化 uloop
      * 否则无法处理任何请求
@@ -297,6 +359,7 @@ int main(int argc, char **argv) {
      */
     ctx = ubus_connect(NULL);
     if (!ctx) {
+        syslog(LOG_DEBUG, "Failed to connect to ubus");
         fprintf(stderr, "Failed to connect to ubus\n");
         return -1;
     }
@@ -309,6 +372,9 @@ int main(int argc, char **argv) {
      */
     ubus_add_uloop(ctx);
 
+    /* 设置断线回调 */
+    ctx->connection_lost = ubus_connection_lost;    //极少情况会需要重连,比如ubus升级/崩溃等,仅做学习
+
     /* 4️⃣ 向 ubusd 注册 object（对外暴露接口）
      *
      * 成功后才能通过：
@@ -318,6 +384,7 @@ int main(int argc, char **argv) {
      * object 名字不能重复
      */
     if (ubus_add_object(ctx, &my_object)) {
+        syslog(LOG_DEBUG, "Failed to add object");
         fprintf(stderr, "Failed to add object\n");
         return -1;
     }
@@ -334,6 +401,9 @@ int main(int argc, char **argv) {
     /* 6️⃣ 释放资源（正常退出时执行） */
     ubus_free(ctx);
     uloop_done();
+
+    // 关闭日志（可选，程序退出时会自动清理）
+    closelog();
 
     return 0;
 }
@@ -368,6 +438,20 @@ int main(int argc, char **argv) {
     ubus call <object> <method> '<JSON>'
     JSON 必须合法
     字符串必须带双引号
+
+
+   reload相关:
+   触发方式: 
+    1. ubus call myubus reload
+    2. /etc/init.d/myapp reload
+    3. procd_send_signal myubus HUP
+    4. 监听时间主动触发
+    5. UI 中使用 (等价于ubus call mydaemon reload)
+        rpc.declare({
+            object: 'myubus',
+            method: 'reload'
+        })();
+
 
 ============================================================
 */
