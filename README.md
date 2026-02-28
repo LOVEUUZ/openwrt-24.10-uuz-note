@@ -1,3 +1,17 @@
+# WSL编译用
+```sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+luci-i18n-base-zh-cn
+```
+
+# 可能有用的东西
+```sh
+sudo apt install gdb-multiarch #在自己编译出来的调试工具有问题的时候就用通用的
+
+```
+
+
+
 ![OpenWrt logo](include/logo.png)
 
 OpenWrt Project is a Linux operating system targeting embedded devices. Instead

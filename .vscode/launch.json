@@ -1,0 +1,43 @@
+{
+  // /usr/bin/gdb-multiarch 通过 sudo apt install gdb-multiarch 安装, 因为我树莓派5编译出来的开始连接后dbg会自己崩溃
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) 启动",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build_dir/target-aarch64_cortex-a76_musl/myubus-1.0/myubus",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "miDebuggerServerAddress": "10.0.0.230:2345",
+            "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "设置架构为 ARM",
+          "text": "set architecture arm",
+          "ignoreFailures": false
+        },
+        {
+          "description": "设置系统根目录",
+          "text": "set sysroot ${workspaceFolder}/build_dir/target-arm_cortex-a9_musl_eabi/root-vspm350",
+          "ignoreFailures": true
+        },
+        {
+          "description": "设置反汇编风格",
+          "text": "set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+    }
+
+  ]
+}

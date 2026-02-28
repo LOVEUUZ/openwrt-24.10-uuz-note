@@ -20,6 +20,8 @@
 #include <libubox/uloop.h>
 #include <syslog.h>
 
+#include "myubus_dbg_test.h"
+
 /* ubus 上下文指针 */
 static struct ubus_context *ctx;
 
@@ -256,7 +258,7 @@ static int my_info_par2(struct ubus_context *ctx,
 }
 
 /* ==============================
- * ubus reload 方法实现 (应用层该操作麻烦的话就算了,让重启的方式来完成重载)
+ * ubus reload 方法实现
  * ============================== */
 static int my_reload(struct ubus_context *ctx,
           struct ubus_object *obj,
@@ -339,8 +341,11 @@ static void ubus_connection_lost(struct ubus_context *ctx)
 
 
 int main(int argc, char **argv) {
-     // 可选：设置日志的标识符和选项，如果不调用，syslog会使用默认值
-     openlog("myubus", LOG_CONS | LOG_PID, LOG_USER); 
+    // 可选：设置日志的标识符和选项，如果不调用，syslog会使用默认值
+    openlog("myubus", LOG_CONS | LOG_PID, LOG_USER); 
+
+    //测试dbg多文件调试
+    myubus_log("abcdefghijk");
 
     /* 1️⃣ 初始化事件循环
      * ubus 是基于事件驱动的，必须先初始化 uloop

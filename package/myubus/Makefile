@@ -5,8 +5,6 @@ PKG_NAME:=myubus
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 
-include $(INCLUDE_DIR)/package.mk
-
 # define Package/myubus
 # 声明一个包的元信息结构
 # 名字必须和 PKG_NAME 一致
@@ -38,18 +36,36 @@ define Package/myubus/description
  A simple ubus demo service.
 endef
 
+
+# 手动开启或关闭编译进dbg信息
+DEBUG_enable := 1
+
+ifeq ($(DEBUG_enable),1)
+    $(info >>> MYUBUS DEBUG MODE <<<)
+    TARGET_CFLAGS := $(filter-out -Os,$(TARGET_CFLAGS))
+    TARGET_CFLAGS += -O0 -g3 -fno-omit-frame-pointer
+endif
+
+include $(INCLUDE_DIR)/package.mk
+
+
 #在 build_dir 里创建一个临时编译目录，把源码复制进去
 #好处：build_dir 可以被自动清理，支持并行编译，不污染源码目录
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(CP) ./src/* $(PKG_BUILD_DIR)/
+	$(CP) ./include $(PKG_BUILD_DIR)/
 endef
 
 # 编译工具栏和内容
 define Build/Compile
-	$(TARGET_CC) $(TARGET_CFLAGS) \
+	$(TARGET_CC) \
+		$(TARGET_CFLAGS) \
+		-I$(PKG_BUILD_DIR) \
+		-I$(PKG_BUILD_DIR)/include \
 		-o $(PKG_BUILD_DIR)/myubus \
 		$(PKG_BUILD_DIR)/myubus.c \
+		$(PKG_BUILD_DIR)/myubus_dbg_test.c \
 		-lubus -lubox
 endef
 
