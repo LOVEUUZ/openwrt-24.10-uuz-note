@@ -571,22 +571,32 @@ return view.extend({
 				o.modalonly = true;
 				o.default = o.enabled;
 
+				//Edit->Firewall Settings 页面
 				if (L.hasSystemFeature('firewall')) {
+					//通过taboption来选中操作页面是firewall下的，第二个参数是下拉框类型，第三个参数带下拉框那就只是一个伪字段，通常需要设置o.ucioption = false或重写o.write()。如果不带就是普通的绑定form下面的一个属性的默认用法
 					o = s.taboption('firewall', widgets.ZoneSelect, '_zone', _('Create / Assign firewall-zone'), _('Choose the firewall zone you want to assign to this interface. Select <em>unspecified</em> to remove the interface from the associated zone or fill out the <em>custom</em> field to define a new zone and attach the interface to it.'));
-					o.network = ifc.getName();
-					o.optional = true;
+					o.network = ifc.getName(); //ZoneSelect 不是普通的表单字段，它是一个 widget 组件。告诉这个 ZoneSelect：你是为这个 interface 服务的。
+					o.optional = true;				 //表示非必选，不会触发校验错误
 
+					//默认情况下form读取uci的方式是 uci.get, 但这里是 '_zone', 所以必须重写来实现如何读取值
 					o.cfgvalue = function(section_id) {
+						 console.log("section_id =>" + section_id);	//输出的是当前编辑的接口的自定义名称, 如 lan/wan/nas0 之类的
+						//在uci show firewall 中查找 zone 的内容, 当传出参数(当前操作接口的name)和zone数组中其中一个 network 匹配,就返回 zone.Name(默认只有lan和wan,也就是下拉框中显示的内容)
 						return firewall.getZoneByNetwork(ifc.getName()).then(function(zone) {
 							return (zone != null ? zone.getName() : null);
 						});
 					};
 
+					console.log("ifc.getName() =>" + ifc.getName());  //输出接口名，比如 lan/nas_p1/wan 这种用户可以自定义的
+
+				//重写该option的写操作和删除操作
 					o.write = o.remove = function(section_id, value) {
 						return Promise.all([
-							firewall.getZoneByNetwork(ifc.getName()),
+							firewall.getZoneByNetwork(ifc.getName()),  //见上,不管这里没过滤
 							(value != null) ? firewall.getZone(value) : null
 						]).then(function(data) {
+							// console.log("data[0] =>" + JSON.stringify(data[0], null, 2));
+              // console.log("data[1] =>" + JSON.stringify(data[1], null, 2));
 							var old_zone = data[0],
 							    new_zone = data[1];
 
@@ -609,6 +619,7 @@ return view.extend({
 					};
 				}
 
+				
 				for (var i = 0; i < protocols.length; i++) {
 					proto_select.value(protocols[i].getProtocol(), protocols[i].getI18n());
 
@@ -931,7 +942,6 @@ return view.extend({
 							return res[1];
 						}, this));
 					};
-
 
 					so = ss.taboption('ipv6', form.RichListValue, 'dhcpv6', _('DHCPv6-Service'),
 						_('Configures the operation mode of the DHCPv6 service on this interface.'));

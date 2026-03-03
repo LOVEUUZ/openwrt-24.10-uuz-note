@@ -31,12 +31,15 @@ function parsePolicy(s, defaultValue) {
 
 var Firewall, AbstractFirewallItem, Defaults, Zone, Forwarding, Redirect, Rule;
 
+
 function lookupZone(name) {
+	//两个参数，等同于命令  uci show firewall.wan (假设参数是wan), 但大概率找不到, 因为一般是匿名的
 	var z = uci.get('firewall', name);
 
 	if (z != null && z['.type'] == 'zone')
 		return new Zone(z['.name']);
 
+	//因为是匿名的, 所以需要遍历所有 'zone'
 	var sections = uci.sections('firewall', 'zone');
 
 	for (var i = 0; i < sections.length; i++) {
@@ -122,8 +125,10 @@ Firewall = L.Class.extend({
 
 	getZoneByNetwork: function(network) {
 		return initFirewallState().then(function() {
+			//遍历所有匿名 'zone'
 			var sections = uci.sections('firewall', 'zone');
 
+			//如果 network名称(参数) 和 某个zone的name一致 , 则返回该zone
 			for (var i = 0; i < sections.length; i++)
 				if (L.toArray(sections[i].network).indexOf(network) != -1)
 					return new Zone(sections[i]['.name']);
@@ -283,7 +288,7 @@ Defaults = AbstractFirewallItem.extend({
 	}
 });
 
-
+//看起来属性就两个, sid和data. 其中sid如果非匿名就是显示的那个名称, 如果是匿名,那就是 'cfgxxxxx' 这样的命名格式
 Zone = AbstractFirewallItem.extend({
 	__init__: function(name) {
 		var section = uci.get('firewall', name);
@@ -347,14 +352,29 @@ Zone = AbstractFirewallItem.extend({
 		return true;
 	},
 
+	//这个是 Zone 中的 delete, 也是 old_zone.deleteNetwork(ifc.getName()); 调用的地方. 别搞成另外一个firewall的delete了
 	deleteNetwork: function(network) {
 		var oldNetworks = this.getNetworks(),
-		    newNetworks = oldNetworks.filter(function(net) { return net != network });
+		    newNetworks = oldNetworks.filter(function(net) { return net != network });  //去掉 参数network 这个接口名后的新数组
+
+		// console.log("deleteNetwork => " + JSON.stringify(oldNetworks,null,2));  //输出的也是自定义接口名字, 组数形式, 如果绑定了多个那就都会输出(修改前的,现在就是准备删)
+
+		/*
+    config zone
+        option name 'lan'
+        option input 'ACCEPT'
+        option output 'ACCEPT'
+        option forward 'ACCEPT'
+        list network 'lan'
+        list network 'agent'
+
+      可以看到, network属性是一个 list , set的时候他会清除现有的list在设置新的
+    */
 
 		if (newNetworks.length > 0)
 			this.set('network', newNetworks);
 		else
-			this.set('network', null);
+			this.set('network', null);  	//null的意思是删除该配置项
 
 		return (newNetworks.length < oldNetworks.length);
 	},
