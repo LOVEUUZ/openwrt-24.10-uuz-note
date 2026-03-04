@@ -2596,6 +2596,32 @@
 		 */
 		hasSystemFeature() {
 			const ft = sysFeatures[arguments[0]];
+			// console.log("arguments => " + JSON.stringify(arguments,null,2));  //"0": "dnsmasq"
+      /*
+        比如参数是 dnsmasq, ft返回的就是下面的这些内容
+      {
+        "gnu-getopt": true,
+        "tftp": true,
+        "dnssec": false,
+        "conntrack": false,
+        "dbus": false,
+        "ipset": false,
+        "cryptohash": false,
+        "ipv6": true,
+        "lua": false,
+        "inotify": true,
+        "dhcp": true,
+        "loop-detect": true,
+        "dumpfile": true,
+        "ubus": true,
+        "id": false,
+        "i18n": false,
+        "idn": false,
+        "dhcpv6": false,
+        "auth": false
+      }
+      */
+      // console.log("ft => " + JSON.stringify(ft,null,2));
 
 			if (arguments.length == 2)
 				return this.isObject(ft) ? ft[arguments[1]] : null;

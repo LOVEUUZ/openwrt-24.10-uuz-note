@@ -67,6 +67,7 @@ function render_status(node, ifc, with_device) {
 
 	desc = desc ? '%s (%s)'.format(desc, ifc.getI18n()) : ifc.getI18n();
 
+	//目前观察下来只有点编辑的时候, with_device才是true
 	const changecount = with_device ? 0 : count_changes(ifc.getName());
 	const maindev = ifc.getL3Device() || ifc.getDevice();
 	const macaddr = maindev ? maindev.getMAC() : null;
@@ -101,6 +102,7 @@ function render_status(node, ifc, with_device) {
 function render_modal_status(node, ifc) {
 	var dev = ifc ? (ifc.getDevice() || ifc.getL3Device() || ifc.getL3Device()) : null;
 
+	//清空node内容填充新内容
 	dom.content(node, [
 		E('img', {
 			'src': L.resource('icons/%s%s.svg').format(dev ? dev.getType() : 'ethernet', ifc.isUp() ? '' : '_disabled'),
@@ -514,8 +516,10 @@ return view.extend({
 			return tdEl;
 		};
 
+		//给编辑页面添加组件
 		s.addModalOptions = function(s) {
-			var protoval = uci.get('network', s.section, 'proto'),
+			// console.log("s.section => " + s.section);
+			var protoval = uci.get('network', s.section, 'proto'), //获取该接口所使用的协议
 			    protoclass = protoval ? network.getProtocol(protoval) : null,
 			    o, proto_select, proto_switch, type, stp, igmp, ss, so;
 
@@ -529,10 +533,12 @@ return view.extend({
 					return L.naturalCompare(a.getProtocol(), b.getProtocol());
 				});
 
+				//edit->General Settings->Status 通用设置页面的状态栏
 				o = s.taboption('general', form.DummyValue, '_ifacestat_modal', _('Status'));
 				o.modalonly = true;
 				o.cfgvalue = L.bind(function(section_id) {
 					var net = this.networks.filter(function(n) { return n.getName() == section_id })[0];
+					// console.log("net => " + JSON.stringify(net,null,2));	//输出的是 "sid": "xxx" 其中xxx是自定的接口名
 
 					return render_modal_status(E('div', {
 						'id': '%s-ifc-status'.format(section_id),
@@ -541,27 +547,29 @@ return view.extend({
 				}, this);
 				o.write = function() {};
 
-
+				//edit->General Settings->协议下拉框
 				proto_select = s.taboption('general', form.ListValue, 'proto', _('Protocol'));
-				proto_select.modalonly = true;
+				proto_select.modalonly = true; //好像意思是跟模态和显示控制在弹出框中的有关的,没懂
 
+				//edit->General Settings->协议切换按钮
 				proto_switch = s.taboption('general', form.Button, '_switch_proto');
 				proto_switch.modalonly  = true;
-				proto_switch.title      = _('Really switch protocol?');
-				proto_switch.inputtitle = _('Switch protocol');
+				proto_switch.title      = _('Really switch protocol?'); 		//左侧标题
+				proto_switch.inputtitle = _('Switch protocol');							//按钮中的文本显示
 				proto_switch.inputstyle = 'apply';
 				proto_switch.onclick = L.bind(function(ev) {
 					s.map.save()
-						.then(L.bind(m.load, m))
+						.then(L.bind(m.load, m)) 			//保存完后重载执行load和render重写渲染页面
 						.then(L.bind(m.render, m))
-						.then(L.bind(this.renderMoreOptionsModal, this, s.section));
+						.then(L.bind(this.renderMoreOptionsModal, this, s.section));	//渲染完成后打开更多弹窗
 				}, this);
 
+				//edit->General Settings->设备勾选下拉框(跟着协议来,不是所有的协议都显示这个)
 				o = s.taboption('general', widgets.DeviceSelect, '_net_device', _('Device'));
-				o.ucioption = 'device';
-				o.nobridges = false;
-				o.optional = false;
-				o.network = ifc.getName();
+				o.ucioption = 'device';			//将 _net_device 字段映射到UCI的 device (不写这个用的就是字段名 _net_device)
+				o.nobridges = false;				//所有桥设备都不可选
+				o.optional = false;					//不允许字段为空
+				o.network = ifc.getName();	
 				o.exclude = '@' + ifc.getName();
 
 				o = s.taboption('general', form.Flag, 'disabled', _('Disable this interface'));
@@ -619,14 +627,15 @@ return view.extend({
 					};
 				}
 
-				
+				//edit->General Settings->协议切换按钮的显示控制逻辑
 				for (var i = 0; i < protocols.length; i++) {
-					proto_select.value(protocols[i].getProtocol(), protocols[i].getI18n());
+					proto_select.value(protocols[i].getProtocol(), protocols[i].getI18n()); //往下拉菜单添加选项
 
-					if (protocols[i].getProtocol() != uci.get('network', s.section, 'proto'))
-						proto_switch.depends('proto', protocols[i].getProtocol());
+					if (protocols[i].getProtocol() != uci.get('network', s.section, 'proto')) // 比如 dhcp!=dhcp ,就什么都不做, 这样下面就不执行, 
+						proto_switch.depends('proto', protocols[i].getProtocol());			//depends的作用是给当前字段(这里是协议切换按钮)添加显示条件, 当 字段(proto) 等于 协议内容(如dhcp/pppoe等) 的时候显示(当 配置字段 等于 某个值 时才显示)
 				}
 
+				//正常来说 ubus call system board 可用看到到底支不支持该模块, 看不到的话就去 hasSystemFeature 中打印 sysFeatures
 				if (L.hasSystemFeature('dnsmasq') || L.hasSystemFeature('odhcpd')) {
 					o = s.taboption('dhcp', form.SectionValue, '_dhcp', form.TypedSection, 'dhcp');
 
