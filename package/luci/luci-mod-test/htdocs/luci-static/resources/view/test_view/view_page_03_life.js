@@ -20,8 +20,8 @@ return view.extend({
 		var m, s1, s2, o1, o2, o3;
 
 		//form.Map 直接绑定uci内容, form.JSONMap 绑定的是 js 中的数据结构
-		m.tabbed = true;
 		m = new form.Map('myapp', '这些是myapp相关内容');
+		m.tabbed = true;
 		
 
 		s1 = m.section(form.NamedSection, 'settings', 'setting内容');

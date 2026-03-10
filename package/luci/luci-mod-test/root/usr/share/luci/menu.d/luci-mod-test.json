@@ -81,6 +81,28 @@
 		}
 	},
 
+	"admin/Test/view/view_page_07_coordinated_control": {
+		"title": "联动控制",
+		"order": 7,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_07_coordinated_control"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
+	"admin/Test/view/view_page_08_more_map": {
+		"title": "多form同页",
+		"order": 8,
+		"action": {
+			"type": "view",
+			"path": "test_view/view_page_08_more_map"
+		},"depends": {
+			"acl": [ "luci-mod-myapp-uci" ]
+		}
+	},
+
 	"admin/Test/uci": {
 		"title": "uci",
 		"order": 2,
